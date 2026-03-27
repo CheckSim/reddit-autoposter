@@ -1,0 +1,17 @@
+{
+    "client_id": "IL_TUO_CLIENT_ID",
+    "client_secret": "IL_TUO_CLIENT_SECRET",
+    "username": "IL_TUO_USERNAME",
+    "password": "LA_TUA_PASSWORD",
+    "user_agent": "WeeklyPostBot v1.0",
+    
+    "posts": [
+        {
+            "subreddit": "test",
+            "title": "Post Settimanale - Tool XYZ",
+            "content": "# Benvenuti nel thread settimanale!\n\nQuesto post viene ricreato automaticamente ogni settimana.\n\n## Informazioni sul Tool XYZ\n\n- Link: https://esempio.com\n- Descrizione: Un tool fantastico per...\n\n---\n\n*Questo è un post automatico creato da un bot*",
+            "sticky": true,
+            "schedule": "09:00"
+        }
+    ]
+}
