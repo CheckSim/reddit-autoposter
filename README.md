@@ -1,286 +1,215 @@
-# Reddit Weekly Post Bot
+# Devvit Weekly Post Bot
 
-Automatic bot to recreate weekly posts on Reddit, deleting the old one and creating a new one to maximize visibility.
+Automatic Devvit app for Reddit that creates a weekly post in a subreddit, deletes the previous one, and repeats the cycle indefinitely — all running serverlessly on Reddit's own infrastructure.
 
 ## 📋 Prerequisites
 
-- Python 3.7 or higher
-- Reddit account with moderator permissions on the target subreddit
-- Reddit API credentials
+- Node.js (installed inside a virtual environment — see below)
+- A Reddit account with moderator permissions on the target subreddit
+- A Reddit Developer account on [developers.reddit.com](https://developers.reddit.com)
 
-## 🚀 Installation
+***
 
-### 1. Install Python
+## 🐍 Installing Node.js in a Virtual Environment
 
-Check if you have Python installed:
-```bash
-python --version
-```
+This project uses a Python `virtualenv` + `nodeenv` combo to keep Node.js isolated from your system installation. This is the recommended approach if you prefer to manage Node.js versions per-project.
 
-If not installed, download it from [python.org](https://www.python.org/downloads/)
-
-### 2. Install required libraries
+### 1. Create and activate the Python virtual environment
 
 ```bash
-pip install praw schedule
+# Create the virtualenv
+python3 -m venv .venv
+
+# Activate it (macOS/Linux)
+source .venv/bin/activate
+
+# Activate it (Windows CMD)
+.venv\Scripts\activate.bat
+
+# Activate it (Windows PowerShell)
+.venv\Scripts\Activate.ps1
 ```
 
-### 3. Create a Reddit application
+### 2. Install nodeenv
 
-1. Go to https://www.reddit.com/prefs/apps
-2. Click "create another app..." or "are you a developer? create an app..."
-3. Fill in the fields:
-   - **name**: `WeeklyPostBot` (or any name you prefer)
-   - **type**: select **script**
-   - **description**: leave empty or write a description
-   - **about url**: leave empty
-   - **redirect uri**: `http://localhost:8080`
-4. Click "create app"
-5. Note down:
-   - **client_id**: the string under "personal use script"
-   - **client_secret**: the string next to "secret"
-
-## ⚙️ Configuration
-
-You have two options:
-
-### Option A: Configuration in code (simpler)
-
-Use `reddit_weekly_bot.py` and directly modify the CONFIG section in the script:
-
-```python
-CONFIG = {
-    'client_id': 'abc123def456',              # From step 3
-    'client_secret': 'xyz789uvw321',          # From step 3
-    'username': 'your_username',              # Reddit username
-    'password': 'your_password',              # Reddit password
-    'user_agent': 'WeeklyPostBot v1.0',
-    
-    'posts': [
-        {
-            'subreddit': 'yoursubredditname',        # Without r/
-            'title': 'Weekly Post - Tool XYZ',
-            'content': 'Post content...',
-            'sticky': True,
-            'schedule': '09:00'                      # 24h format (HH:MM)
-        }
-    ]
-}
-```
-
-### Option B: Configuration from JSON file (cleaner)
-
-Use `reddit_weekly_bot_json.py` and modify the `config.json` file:
-
-```json
-{
-    "client_id": "abc123def456",
-    "client_secret": "xyz789uvw321",
-    "username": "your_username",
-    "password": "your_password",
-    "user_agent": "WeeklyPostBot v1.0",
-    
-    "posts": [
-        {
-            "subreddit": "yoursubredditname",
-            "title": "Weekly Post - Tool XYZ",
-            "content": "# Title\n\nContent...",
-            "sticky": true,
-            "schedule": "09:00"
-        }
-    ]
-}
-```
-
-**Note on content**: Use `\n` for line breaks in JSON.
-
-## 🎯 Adding Multiple Posts
-
-You can manage multiple subreddits and posts. Just add elements to the `posts` array:
-
-```python
-'posts': [
-    {
-        'subreddit': 'first_sub',
-        'title': 'Weekly Post #1',
-        'content': 'First post content',
-        'sticky': True,
-        'schedule': '09:00'  # Monday at 9:00 AM
-    },
-    {
-        'subreddit': 'second_sub',
-        'title': 'Weekly Post #2',
-        'content': 'Second post content',
-        'sticky': True,
-        'schedule': '14:00'  # Monday at 2:00 PM
-    },
-    {
-        'subreddit': 'first_sub',
-        'title': 'Another Recurring Post',
-        'content': 'Other content',
-        'sticky': False,  # Not pinned
-        'schedule': '18:00'  # Monday at 6:00 PM
-    }
-]
-```
-
-## ▶️ Running the Bot
-
-### Starting the bot
-
-**With configuration in code:**
 ```bash
-python reddit_weekly_bot.py
+pip install nodeenv
 ```
 
-**With JSON configuration:**
+### 3. Install Node.js inside the virtual environment
+
 ```bash
-python reddit_weekly_bot_json.py
+nodeenv --node=lts --prebuilt -p
 ```
 
-### The bot will:
-1. ✅ Search and delete the old post with the same title
-2. ✅ Create a new identical post
-3. ✅ Pin it to the top of the subreddit (if `sticky: True`)
-4. ✅ Repeat the operation every week at the specified time
+> The `-p` flag tells `nodeenv` to install Node inside the already active Python virtualenv, so everything stays contained.
 
-### Stopping it
+### 4. Verify the installation
 
-Press `Ctrl+C` in the terminal
+```bash
+node --version
+npm --version
+```
+
+### 5. Install the Devvit CLI
+
+```bash
+npm install -g @devvit/cli
+```
+
+> ⚠️ If the `devvit` command is not recognized after installation, use `npx devvit` as a prefix for every command instead.
+
+***
+
+## 🚀 Installation & Setup
+
+### 1. Authenticate with Reddit
+
+```bash
+npx devvit login
+```
+
+A browser window will open asking you to authorize the Devvit CLI with your Reddit account.
+
+### 2. Clone or use this template
+
+```bash
+npx devvit new my-weekly-bot
+cd my-weekly-bot
+```
+
+Then replace the content of `src/main.ts` with the code from this repository.
+
+### 3. Configure the app
+
+Open `src/main.ts` and set your subreddit name and post content:
+
+```typescript
+const SUBREDDIT_NAME = 'yoursubredditname'; // Without r/
+const POST_TITLE     = 'Weekly Thread 🗓️';
+const POST_BODY      = 'This is the weekly post body. Supports **Markdown**!';
+```
+
+***
+
+## ⚙️ Project Structure
+
+```
+my-weekly-bot/
+├── src/
+│   └── main.ts          # Core bot logic (scheduler + Redis + post creation)
+├── devvit.yaml          # App manifest: name, version, scheduler config
+├── package.json         # Node.js dependencies
+└── tsconfig.json        # TypeScript compiler config
+```
+
+***
+
+## 🔁 How It Works
+
+Every week at the scheduled time, the bot:
+
+1. ✅ Reads the previous post ID from the **Redis** key-value store
+2. ✅ **Deletes** the old post (if it exists)
+3. ✅ **Creates** a new post with the same title and body
+4. ✅ **Saves** the new post ID to Redis for the next cycle
+5. ✅ Optionally **pins** the post to the subreddit (requires moderator permissions)
+
+No external server, no cron job, no tokens to refresh — Reddit hosts everything for free.
+
+***
+
+## ▶️ Deploy & Run
+
+### Upload the app to Reddit's servers
+
+```bash
+npx devvit upload
+```
+
+### Install the app on your subreddit
+
+```bash
+npx devvit install
+```
+
+Select your target subreddit from the interactive list.
+
+### Trigger the job manually (for testing)
+
+```bash
+npx devvit exec scheduler run post-settimanale
+```
+
+***
+
+## 🔧 Customizing the Schedule
+
+The cron expression is defined in `devvit.yaml`:
+
+```yaml
+scheduler:
+  tasks:
+    weekly-post:
+      cron: "0 9 * * 1"   # Every Monday at 09:00 UTC
+```
+
+Common alternatives:
+
+| Expression        | Meaning                  |
+|-------------------|--------------------------|
+| `0 9 * * 1`       | Every Monday at 09:00 UTC |
+| `0 12 * * 5`      | Every Friday at 12:00 UTC |
+| `0 8 * * *`       | Every day at 08:00 UTC    |
+| `0 18 1 * *`      | First day of each month   |
+
+> ⚠️ Devvit cron times are in **UTC**. Remember to convert from your local timezone (e.g., CEST = UTC+2).
+
+***
 
 ## 📊 Logging
 
-The bot creates a `reddit_bot.log` file with all operation details:
-- Deleted posts
-- Created posts
-- Any errors
-- Execution times
-
-## 🖥️ Keeping the Bot Always Running
-
-### Option 1: Always-on computer
-Leave the terminal open with the bot running.
-
-### Option 2: VPS/Cloud (recommended)
-Use an inexpensive cloud server (DigitalOcean, Linode, AWS, etc.):
-
-1. Rent a Linux VPS ($5-10/month)
-2. Upload the script
-3. Use `screen` or `tmux` to keep it running:
+The bot uses `console.log` / `console.error` for structured output. You can view logs in real time from the Devvit CLI:
 
 ```bash
-# Install screen
-sudo apt install screen
-
-# Start a session
-screen -S redditbot
-
-# Start the bot
-python reddit_weekly_bot.py
-
-# Detach (bot continues running): Ctrl+A then D
-# Reattach when needed: screen -r redditbot
+npx devvit logs <your-subreddit>
 ```
 
-### Option 3: Systemd (Advanced Linux)
-Create a systemd service for automatic startup on boot.
-
-## 🔧 Customizations
-
-### Changing the frequency
-
-Modify the line in the code:
-```python
-schedule.every().week.at(schedule_time).do(...)
-```
-
-You can use:
-- `.day.at("10:00")` - Every day
-- `.monday.at("10:00")` - Every Monday
-- `.week.at("10:00")` - Every week (default Monday)
-- `.hours.do(...)` - Every X hours
-- `.minutes.do(...)` - Every X minutes
-
-### Content formatting
-
-The content supports Reddit Markdown:
-```python
-content = '''
-# Large title
-## Subtitle
-
-**Bold** and *italic*
-
-- List
-- Of
-- Items
-
-[Link](https://example.com)
-
-> Quote
-
-`inline code`
-
-    code block
-'''
-```
+***
 
 ## ⚠️ Important Notes
 
-1. **Permissions**: The account must be a moderator of the subreddit
-2. **Rate limiting**: Reddit limits API usage. The bot handles automatic pauses
-3. **Sticky slots**: Reddit allows max 2 pinned posts. The bot uses the first slot
-4. **Privacy**: Never share your `client_secret` and `password`
-5. **Backup**: Save the `config.json` file securely
+1. **Moderator permissions**: The Reddit account must be a moderator of the target subreddit.
+2. **Sticky slots**: Reddit allows a maximum of 2 pinned posts. If both slots are taken, pinning will fail silently.
+3. **Redis persistence**: Data is stored in Devvit's managed Redis instance, tied to the app installation. If you uninstall and reinstall the app, the stored post ID is lost.
+4. **Privacy**: Never commit credentials to the repository. Devvit handles authentication internally — no secrets needed in the code.
+5. **Rate limiting**: Devvit's Reddit API integration handles rate limits automatically.
+
+***
 
 ## 🐛 Troubleshooting
 
-### "Invalid credentials"
-- Verify username and password
-- Check client_id and client_secret
-- Make sure you don't have 2FA enabled (or use a token)
+### `command not found: devvit`
+Use `npx devvit` instead of `devvit` directly. This bypasses PATH issues with globally installed npm packages.
 
-### "Forbidden (HTTP 403)"
-- Verify you're a moderator of the subreddit
-- Check mod permissions (you need "posts" permission)
+### `Error: Not a moderator`
+Make sure the Reddit account used during `devvit login` has moderator privileges on the target subreddit.
 
-### "Rate limit exceeded"
-- Wait a few minutes
-- The bot has automatic waiting mechanisms
+### Post is created but not pinned
+Check that no more than 1 post is already pinned in the subreddit (Reddit allows a maximum of 2).
 
-### Post doesn't get pinned
-- Verify you have "posts" mod permissions
-- Check there aren't already 2 pinned posts
+### Redis key not found on first run
+This is expected — on the very first execution there is no previous post ID. The bot handles this gracefully and proceeds to create the first post.
 
-## 📝 Complete Example
+***
 
-```json
-{
-    "client_id": "abc123XYZ",
-    "client_secret": "xyz456ABC-secret",
-    "username": "MyBot",
-    "password": "SecurePassword123!",
-    "user_agent": "WeeklyPostBot v1.0 by u/MyBot",
-    
-    "posts": [
-        {
-            "subreddit": "mysubreddit",
-            "title": "📢 Weekly Thread - Recommended Tool",
-            "content": "# Welcome to the weekly thread!\n\n## Tool of the week\n\n**Name**: Tool XYZ\n**Link**: https://example.com\n**Description**: This tool is awesome because...\n\n### How to use it\n\n1. Step one\n2. Step two\n3. Step three\n\n---\n\n*Post automatically recreated every Monday at 9:00 AM*",
-            "sticky": true,
-            "schedule": "09:00"
-        }
-    ]
-}
-```
+## 📚 Resources
 
-## 📞 Support
+- [Devvit Official Documentation](https://developers.reddit.com/docs/)
+- [Devvit Scheduler API](https://developers.reddit.com/docs/capabilities/server/scheduler)
+- [Devvit Redis API](https://developers.reddit.com/docs/capabilities/server/redis)
+- [Reddit Responsible Builder Policy](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy)
 
-For issues or questions:
-- Check the logs in `reddit_bot.log`
-- Check PRAW documentation: https://praw.readthedocs.io/
-- Check Reddit API: https://www.reddit.com/dev/api/
-
----
+***
 
 **Happy botting! 🤖**

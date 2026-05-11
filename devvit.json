@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "rtaweeklyposter",
+  "blocks": {
+    "entry": "src/main.ts",
+    "scheduledJobs": [
+      {
+        "name": "rtaweeklyposter",
+        "cron": "0 9 * * 1"
+      }
+    ]
+  },
+  "permissions": {
+    "redis": true
+  }
+}
