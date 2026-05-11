@@ -1,40 +1,75 @@
 import { Devvit } from '@devvit/public-api';
 
-// 1. Abilitiamo i plugin necessari: Redis (database) e l'API di Reddit
+// Configurazione
 Devvit.configure({
-  redditAPI: true
+  redditAPI: true,
+  redis: true
 });
 
-// 2. Definiamo l'azione schedulata
+// Configurazioni del bot (MODIFICA QUESTI VALORI)
+const CONFIG = {
+  subredditName: 'IL_TUO_SUBREDDIT',  // Senza "r/"
+  postTitle: 'Discussione Settimanale 🗓️',
+  postContent: `# Benvenuti nel thread settimanale!
+
+Questo post viene ricreato automaticamente ogni settimana.
+
+---
+
+*Questo è un post automatico creato da un bot*`
+};
+
+// Scheduler job
 Devvit.addSchedulerJob({
-  name: 'rtaweeklyposter', // Deve coincidere col nome nel devvit.json
+  name: 'rtaweeklyposter',
   onRun: async (event, context) => {
-    const nomeSubreddit = 'IL_TUO_SUBREDDIT'; // Inserisci il nome senza "r/"
+    console.log('=== Avvio ricreazione post settimanale ===');
     
-    // A. Controlliamo se esiste un ID del post precedente in memoria
-    const oldPostId = await context.redis.get('weekly_post_id');
-    
-    if (oldPostId) {
-      try {
-        // Eliminiamo il vecchio post
-        const vecchiopost = await context.reddit.getPostById(oldPostId);
-        await vecchiopost.delete();
-        console.log(`Vecchio post ${oldPostId} eliminato.`);
-      } catch (error) {
-        console.log("Errore nell'eliminazione, il post potrebbe essere già cancellato.");
+    try {
+      // STEP 1: Recupera l'ID del vecchio post da Redis
+      const oldPostId = await context.redis.get('weekly_post_id');
+      
+      if (oldPostId) {
+        console.log(`Trovato vecchio post ID: ${oldPostId}`);
+        try {
+          const oldPost = await context.reddit.getPostById(oldPostId);
+          await oldPost.delete();
+          console.log(`✓ Vecchio post eliminato: ${oldPostId}`);
+        } catch (error) {
+          console.log(`⚠️ Impossibile eliminare il vecchio post (potrebbe essere già stato eliminato): ${error}`);
+        }
+      } else {
+        console.log('Nessun post precedente trovato in Redis (prima esecuzione?)');
       }
+
+      // STEP 2: Crea il nuovo post
+      console.log('Creazione nuovo post...');
+      const newPost = await context.reddit.submitPost({
+        subredditName: CONFIG.subredditName,
+        title: CONFIG.postTitle,
+        text: CONFIG.postContent,
+      });
+      
+      console.log(`✓ Nuovo post creato: ${newPost.id}`);
+
+      // STEP 3: Pinna il post (opzionale ma raccomandato)
+      try {
+        await newPost.sticky();
+        console.log('✓ Post pinnato con successo');
+      } catch (error) {
+        console.log(`⚠️ Impossibile pinnare il post: ${error}`);
+      }
+
+      // STEP 4: Salva il nuovo ID su Redis per la prossima settimana
+      await context.redis.set('weekly_post_id', newPost.id);
+      console.log(`✓ ID salvato su Redis: ${newPost.id}`);
+      
+      console.log('=== Ricreazione completata con successo ===');
+      
+    } catch (error) {
+      console.error('❌ Errore durante l\'esecuzione:', error);
+      throw error; // Rilancia l'errore per permettere a Devvit di rilevarlo
     }
-
-    // B. Creiamo il nuovo post
-    const nuovoPost = await context.reddit.submitPost({
-      subredditName: nomeSubreddit,
-      title: 'Discussione Settimanale',
-      text: 'Questo è il post automatico della settimana.',
-    });
-
-    // C. Salviamo il nuovo ID su Redis per la prossima settimana
-    await context.redis.set('weekly_post_id', nuovoPost.id);
-    console.log(`Nuovo post creato con ID: ${nuovoPost.id}`);
   }
 });
 
