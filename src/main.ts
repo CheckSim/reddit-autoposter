@@ -38,14 +38,14 @@ Devvit.addSchedulerJob({
       // STEP 3: Pin the new post
       try {
         await newPost.sticky();
-        console.log('✓ Post pinnato');
+        console.log('✓ Post pinned successfully');
       } catch (error) {
-        console.log(`⚠️ Impossibile pinnare il post: ${error}`);
+        console.log(`⚠️ Unable to pin the post: ${error}`);
       }
 
       // STEP 4: Save the ID on Redis
       await context.redis.set('weekly_post_id', newPost.id);
-      console.log(`✓ ID salvato su Redis: ${newPost.id}`);
+      console.log(`✓ ID saved on Redis: ${newPost.id}`);
 
       console.log('=== Weekly post recreation completed successfully ===');
 
@@ -66,7 +66,7 @@ async function scheduleJob(context: any) {
     name: APP_CONFIG.appName,
     cron: APP_CONFIG.cron,
   });
-  console.log(`✓ Job schedulato con cron: ${APP_CONFIG.cron}`);
+  console.log(`✓ Job scheduled with cron: ${APP_CONFIG.cron}`);
 }
 
 // Automatic triggers on app install and upgrade
@@ -82,7 +82,7 @@ Devvit.addTrigger({
 
 // Item menu to manually trigger the job
 Devvit.addMenuItem({
-  label: '🔄 Forza ricreazione post settimanale',
+  label: '🔄 Trigger weekly post creation',
   location: 'subreddit',
   forUserType: 'moderator',
   onPress: async (_, context) => {
@@ -90,7 +90,7 @@ Devvit.addMenuItem({
       name: APP_CONFIG.appName,
       runAt: new Date(),
     });
-    context.ui.showToast('Post settimanale in creazione...');
+    context.ui.showToast('Weekly post in creation...');
   },
 });
 
