@@ -1,26 +1,26 @@
 // src/config.ts
-// ⚠️ Quando cambi appName, aggiorna anche "name" in devvit.json
+// ⚠️ When you change appName, remember to update also "name" in devvit.json
 
 export const APP_CONFIG = {
-  // Nome dell'app (deve corrispondere a "name" in devvit.json)
+  // App name (it must match "name" in devvit.json)
   appName: 'MY_APP_NAME',
 
-  // Cron schedule
-  // Esempi:
-  //   '0 9 * * 1'      → ogni lunedì alle 09:00 UTC
-  //   '0 9 * * 1,3,5'  → lunedì, mercoledì, venerdì alle 09:00 UTC
-  //   '0 9 1 * *'      → il primo del mese alle 09:00 UTC
-  cron: '*/5 * * * *', // Ogni 5 minuti (per test, cambia in '0 9 * * 1' per produzione)
+  // With schedule
+  // Examples:
+  //   '0 9 * * 1'      → every monday at 09:00 UTC
+  //   '0 9 * * 1,3,5'  → monday, wednesday, friday at 09:00 UTC
+  //   '0 9 1 * *'      → the first of the month at 09:00 UTC
+  cron: '*/5 * * * *', // Every 5 minutes (for testing, change to '0 9 * * 1' for production)
 
-  // Titolo del post
-  postTitle: 'Discussione Settimanale 🗓️',
+  // Post title
+  postTitle: 'Weekly thread 🗓️',
 
-  // Contenuto del post (supporta markdown Reddit)
-  postContent: `# Benvenuti nel thread settimanale!
+  // Post content (supports Reddit markdown)
+  postContent: `# Welcome in the weekly thread!
 
-Questo post viene ricreato automaticamente ogni settimana.
+This post is automatically recreated every week.
 
 ---
 
-*Questo è un post automatico creato da un bot*`,
+*This is an automated post created by a bot*`,
 };

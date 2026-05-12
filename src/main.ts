@@ -6,36 +6,36 @@ Devvit.configure({
   redis: true,
 });
 
-// Definizione del job
+// Job definition
 Devvit.addSchedulerJob({
   name: APP_CONFIG.appName,
   onRun: async (_, context) => {
-    console.log('=== Avvio ricreazione post settimanale ===');
+    console.log('=== Starting weekly post recreation ===');
 
     try {
-      // STEP 1: Elimina il vecchio post
+      // STEP 1: Delete old post if exists
       const oldPostId = await context.redis.get('weekly_post_id');
       if (oldPostId) {
         try {
           const oldPost = await context.reddit.getPostById(oldPostId);
           await oldPost.delete();
-          console.log(`✓ Vecchio post eliminato: ${oldPostId}`);
+          console.log(`✓ Old post deleted: ${oldPostId}`);
         } catch (error) {
-          console.log(`⚠️ Impossibile eliminare il vecchio post: ${error}`);
+          console.log(`⚠️ Unable to delete the old post: ${error}`);
         }
       } else {
-        console.log('Nessun post precedente trovato (prima esecuzione?)');
+        console.log('No previous post found (first execution?)');
       }
 
-      // STEP 2: Crea il nuovo post
+      // STEP 2: Create new post
       const newPost = await context.reddit.submitPost({
         subredditName: await context.reddit.getCurrentSubreddit().then(s => s.name),
         title: APP_CONFIG.postTitle,
         text: APP_CONFIG.postContent,
       });
-      console.log(`✓ Nuovo post creato: ${newPost.id}`);
+      console.log(`✓ New post created: ${newPost.id}`);
 
-      // STEP 3: Pinna il post
+      // STEP 3: Pin the new post
       try {
         await newPost.sticky();
         console.log('✓ Post pinnato');
@@ -43,20 +43,20 @@ Devvit.addSchedulerJob({
         console.log(`⚠️ Impossibile pinnare il post: ${error}`);
       }
 
-      // STEP 4: Salva l'ID su Redis
+      // STEP 4: Save the ID on Redis
       await context.redis.set('weekly_post_id', newPost.id);
       console.log(`✓ ID salvato su Redis: ${newPost.id}`);
 
-      console.log('=== Ricreazione completata con successo ===');
+      console.log('=== Weekly post recreation completed successfully ===');
 
     } catch (error) {
-      console.error('❌ Errore durante l\'esecuzione:', error);
+      console.error('❌ Error during execution:', error);
       throw error;
     }
   },
 });
 
-// Funzione comune per schedulare/rischedulare il job
+// Common function to schedule the job (used on install and upgrade)
 async function scheduleJob(context: any) {
   const jobs = await context.scheduler.listJobs();
   for (const job of jobs) {
@@ -69,7 +69,7 @@ async function scheduleJob(context: any) {
   console.log(`✓ Job schedulato con cron: ${APP_CONFIG.cron}`);
 }
 
-// Trigger automatici
+// Automatic triggers on app install and upgrade
 Devvit.addTrigger({
   event: 'AppInstall',
   onEvent: async (_, context) => scheduleJob(context),
@@ -80,7 +80,7 @@ Devvit.addTrigger({
   onEvent: async (_, context) => scheduleJob(context),
 });
 
-// Menu item per forzare manualmente la creazione del post
+// Item menu to manually trigger the job
 Devvit.addMenuItem({
   label: '🔄 Forza ricreazione post settimanale',
   location: 'subreddit',
