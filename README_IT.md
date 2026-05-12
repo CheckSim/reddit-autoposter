@@ -1,215 +1,170 @@
-# Devvit Weekly Post Bot
+# Devvit Weekly Post Bot — Template
 
-App Devvit per Reddit che crea automaticamente un post settimanale in un subreddit, elimina quello della settimana precedente e ripete il ciclo all'infinito — il tutto in esecuzione serverless sull'infrastruttura di Reddit, senza bisogno di server esterni.
-
-## 📋 Prerequisiti
-
-- Node.js (installato in un ambiente virtuale — vedi sotto)
-- Un account Reddit con permessi da moderatore nel subreddit di destinazione
-- Un account sviluppatore Reddit su [developers.reddit.com](https://developers.reddit.com)
+Un template per costruire un bot Reddit con [Devvit](https://developers.reddit.com/docs/devvit) che crea e pinna automaticamente un post ricorrente secondo uno schedule, cancella il precedente e salva lo stato con Redis.
 
 ***
 
-## 🐍 Installare Node.js in un Ambiente Virtuale
+## Prerequisiti
 
-Questo progetto utilizza la combinazione `virtualenv` Python + `nodeenv` per mantenere Node.js isolato dall'installazione di sistema. È l'approccio consigliato se preferisci gestire le versioni di Node.js per singolo progetto.
+- Python 3.8+ (opzionale)
+- Node.js (se si usa in coppia con python può essere installato tramite `nodeenv` dentro un virtualenv Python — vedi sotto)
+- Un account Reddit con accesso da moderatore ad almeno un subreddit
+- Un [account sviluppatore Devvit](https://developers.reddit.com)
 
-### 1. Crea e attiva l'ambiente virtuale Python
+***
+
+## Installare Node.js in un Virtual Environment
+
+Questo progetto è stato sviluppato con `nodeenv` per eseguire Node.js all'interno di un virtual environment Python, mantenendo le dipendenze isolate.
+
+Se avete già installato Node.js potete saltare i punti dall'1 al 4.
 
 ```bash
-# Crea il virtualenv
+# 1. Crea il virtual environment Python
 python3 -m venv .venv
 
-# Attivalo (macOS/Linux)
-source .venv/bin/activate
+# 2. Attivalo
+source .venv/bin/activate        # macOS/Linux
+# .venv\Scripts\activate         # Windows
 
-# Attivalo (Windows CMD)
-.venv\Scripts\activate.bat
-
-# Attivalo (Windows PowerShell)
-.venv\Scripts\Activate.ps1
-```
-
-### 2. Installa nodeenv
-
-```bash
+# 3. Installa nodeenv
 pip install nodeenv
-```
 
-### 3. Installa Node.js dentro l'ambiente virtuale
+# 4. Installa Node.js dentro il virtual environment
+nodeenv --node=20.11.0 --prebuilt -p
 
-```bash
-nodeenv --node=lts --prebuilt -p
-```
-
-> Il flag `-p` indica a `nodeenv` di installare Node all'interno del virtualenv Python già attivo, mantenendo tutto contenuto e isolato.
-
-### 4. Verifica l'installazione
-
-```bash
+# 5. Verifica che Node.js e npm siano disponibili
 node --version
 npm --version
 ```
 
-### 5. Installa la CLI di Devvit
-
-```bash
-npm install -g @devvit/cli
-```
-
-> ⚠️ Se il comando `devvit` non viene riconosciuto dopo l'installazione, usa `npx devvit` come prefisso per ogni comando.
+> Tutti i comandi successivi devono essere eseguiti con il virtual environment attivo.
 
 ***
 
-## 🚀 Installazione e Configurazione
-
-### 1. Autenticati con Reddit
+## Installazione
 
 ```bash
-npx devvit login
+# Installa le dipendenze
+npm install
+
+# Installa la CLI di Devvit globalmente
+npm install -g devvit
+
+# Accedi al tuo account Devvit
+devvit login
 ```
 
-Si aprirà una finestra del browser che ti chiederà di autorizzare la CLI Devvit con il tuo account Reddit.
+***
 
-### 2. Clona o usa questo template
+## Configurazione
 
-```bash
-npx devvit new il-mio-bot-settimanale
-cd il-mio-bot-settimanale
-```
-
-Sostituisci poi il contenuto di `src/main.ts` con il codice presente in questo repository.
-
-### 3. Configura l'app
-
-Apri `src/main.ts` e imposta il nome del subreddit e il contenuto del post:
+Tutte le impostazioni specifiche del progetto si trovano in **un solo file**: `src/config.ts`.
 
 ```typescript
-const SUBREDDIT_NAME = 'nomedeltuosubreddit'; // Senza r/
-const POST_TITLE     = 'Thread Settimanale 🗓️';
-const POST_BODY      = 'Questo è il corpo del post settimanale. Supporta il **Markdown**!';
+// src/config.ts
+export const APP_CONFIG = {
+  // Deve corrispondere a "name" in devvit.json
+  appName: 'nome-della-tua-app',
+
+  // Cron schedule (formato UNIX a 5 campi, orario UTC)
+  // '0 9 * * 1'     → ogni lunedì alle 09:00 UTC (11:00 ora italiana)
+  // '0 9 1 * *'     → il primo del mese alle 09:00 UTC
+  cron: '0 9 * * 1',
+
+  // Titolo del post
+  postTitle: 'Discussione Settimanale 🗓️',
+
+  // Contenuto del post (supporta Markdown di Reddit)
+  postContent: `# Benvenuti nel thread settimanale!\n\n*Creato automaticamente da un bot.*`,
+};
 ```
+
+Aggiorna anche il campo `name` in `devvit.json` in modo che corrisponda ad `appName`:
+
+```json
+{
+  "name": "nome-della-tua-app"
+}
+```
+
+> ⚠️ `appName` in `config.ts` e `name` in `devvit.json` devono essere sempre identici.
 
 ***
 
-## ⚙️ Struttura del Progetto
+## Struttura del Progetto
 
 ```
-il-mio-bot-settimanale/
 ├── src/
-│   └── main.ts          # Logica principale del bot (scheduler + Redis + creazione post)
-├── devvit.yaml          # Manifest dell'app: nome, versione, configurazione scheduler
-├── package.json         # Dipendenze Node.js
-└── tsconfig.json        # Configurazione del compilatore TypeScript
+│   ├── config.ts       ← Modifica questo file per configurare il bot
+│   └── main.ts         ← Logica del bot (scheduler, trigger, menu item)
+├── devvit.json         ← Manifest dell'app Devvit
+├── package.json
+├── tsconfig.json
+└── .gitignore
 ```
 
 ***
 
-## 🔁 Come Funziona
+## Come Funziona
 
-Ogni settimana all'orario programmato, il bot:
-
-1. ✅ Legge l'ID del post precedente dallo store **Redis** integrato
-2. ✅ **Elimina** il vecchio post (se esiste)
-3. ✅ **Crea** un nuovo post con lo stesso titolo e corpo
-4. ✅ **Salva** il nuovo ID del post su Redis per il ciclo successivo
-5. ✅ Opzionalmente **fissa** il post in cima al subreddit (richiede permessi da moderatore)
-
-Nessun server esterno, nessun cron job da gestire, nessun token da rinnovare — Reddit ospita tutto gratuitamente.
+1. **Trigger `AppInstall` / `AppUpgrade`** — All'installazione o ad ogni nuovo deploy, i job schedulati esistenti vengono cancellati e il job viene rischedulato con il cron definito in `config.ts`.
+2. **Scheduler job** — Quando scatta il cron, il bot:
+   - Recupera l'ID del post precedente da Redis
+   - Elimina il vecchio post (se esiste)
+   - Crea un nuovo post nel subreddit dove l'app è installata
+   - Pinna il nuovo post
+   - Salva il nuovo ID su Redis per la volta successiva
+3. **Trigger manuale** — Un menu item visibile solo ai moderatori ("🔄 Forza ricreazione post settimanale") è disponibile nel menu del subreddit per triggerare il job immediatamente in qualsiasi momento.
 
 ***
 
-## ▶️ Deploy ed Esecuzione
-
-### Carica l'app sui server di Reddit
+## Deploy
 
 ```bash
-npx devvit upload
+# Build
+npm run type-check
+
+# Carica e pubblica l'app su Devvit
+npm run upload
+
+# Installa l'app su un subreddit (prima volta)
+devvit install nome-della-tua-app NOME_SUBREDDIT
 ```
 
-### Installa l'app nel tuo subreddit
+***
+
+## Sviluppo e Log
 
 ```bash
-npx devvit install
-```
+# Visualizza i log in tempo reale per un subreddit specifico
+devvit logs nome-della-tua-app --subreddit NOME_SUBREDDIT
 
-Seleziona il subreddit di destinazione dalla lista interattiva.
-
-### Esegui il job manualmente (per testare)
-
-```bash
-npx devvit exec scheduler run weekly-post
+# Sessione di playtest interattiva con log live
+devvit playtest NOME_SUBREDDIT
 ```
 
 ***
 
-## 🔧 Personalizzare la Pianificazione
+## Script Disponibili
 
-L'espressione cron è definita nel file `devvit.yaml`:
-
-```yaml
-scheduler:
-  tasks:
-    weekly-post:
-      cron: "0 9 * * 1"   # Ogni lunedì alle 09:00 UTC
-```
-
-Alcune alternative comuni:
-
-| Espressione       | Significato                     |
-|-------------------|---------------------------------|
-| `0 9 * * 1`       | Ogni lunedì alle 09:00 UTC      |
-| `0 12 * * 5`      | Ogni venerdì alle 12:00 UTC     |
-| `0 8 * * *`       | Ogni giorno alle 08:00 UTC      |
-| `0 18 1 * *`      | Il primo giorno di ogni mese    |
-
-> ⚠️ I tempi del cron Devvit sono in **UTC**. Ricordati di convertire dal tuo fuso orario locale (es. CEST = UTC+2, quindi le 11:00 CEST corrispondono alle 09:00 UTC).
+| Script | Comando | Descrizione |
+|--------|---------|-------------|
+| `upload` | `devvit upload` | Build e upload dell'app |
+| `install-app` | `devvit install` | Installa l'app su un subreddit |
+| `logs` | `devvit logs` | Stream dei log in tempo reale |
 
 ***
 
-## 📊 Log
+## Note
 
-Il bot usa `console.log` / `console.error` per l'output strutturato. Puoi visualizzare i log in tempo reale dalla CLI di Devvit:
-
-```bash
-npx devvit logs <nome-del-tuo-subreddit>
-```
-
-***
-
-## ⚠️ Note Importanti
-
-1. **Permessi da moderatore**: L'account Reddit usato durante `devvit login` deve essere moderatore del subreddit di destinazione.
-2. **Slot sticky**: Reddit permette un massimo di 2 post fissati. Se entrambi gli slot sono occupati, il fissaggio fallirà silenziosamente.
-3. **Persistenza Redis**: I dati sono salvati nell'istanza Redis gestita da Devvit, legata all'installazione dell'app. Se disinstalli e reinstalli l'app, l'ID del post salvato andrà perso.
-4. **Privacy**: Non committare mai credenziali nel repository. Devvit gestisce l'autenticazione internamente — non sono necessari segreti nel codice.
-5. **Rate limiting**: L'integrazione Devvit con le API di Reddit gestisce automaticamente i limiti di frequenza.
+- Il cron schedule usa l'orario **UTC**. L'Italia (CEST) è UTC+2, quindi `0 9 * * 1` corrisponde alle **11:00 ora italiana**.
+- Il bot posta come **account dell'app**, non con il tuo account Reddit personale.
+- Il `subredditName` viene ricavato automaticamente dal contesto di installazione — non serve hardcodarlo.
+- Per pinnare i post è necessario che l'app abbia i permessi Reddit a livello moderatore (`reddit: true` in `devvit.json`).
 
 ***
 
-## 🐛 Risoluzione Problemi
+## Licenza
 
-### `command not found: devvit`
-Usa `npx devvit` al posto di `devvit` direttamente. Questo aggira i problemi di PATH con i pacchetti npm installati globalmente.
-
-### `Error: Not a moderator`
-Assicurati che l'account Reddit usato durante `devvit login` abbia i privilegi da moderatore nel subreddit di destinazione.
-
-### Il post viene creato ma non fissato
-Verifica che non ci sia già più di 1 post fissato nel subreddit (Reddit permette un massimo di 2).
-
-### Redis key non trovata alla prima esecuzione
-È normale — alla primissima esecuzione non esiste ancora un ID del post precedente. Il bot gestisce questo caso in modo sicuro e procede a creare il primo post.
-
-***
-
-## 📚 Risorse
-
-- [Documentazione Ufficiale Devvit](https://developers.reddit.com/docs/)
-- [Devvit Scheduler API](https://developers.reddit.com/docs/capabilities/server/scheduler)
-- [Devvit Redis API](https://developers.reddit.com/docs/capabilities/server/redis)
-- [Reddit Responsible Builder Policy](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy)
-
-***
-
-**Buon botting! 🤖**
+MIT
