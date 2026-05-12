@@ -178,4 +178,4 @@ devvit playtest NOME_SUBREDDIT
 
 ## Licenza
 
-MIT
+[Licenza MIT](.LICENSE.md)

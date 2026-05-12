@@ -178,4 +178,4 @@ devvit playtest SUBREDDIT_NAME
 
 ## License
 
-MIT
+[MIT License](.LICENSE.md)
