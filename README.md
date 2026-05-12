@@ -132,6 +132,17 @@ npm run upload
 devvit install your-app-name SUBREDDIT_NAME
 ```
 
+⚠️ Important: After Every Deploy
+After each deploy where you changed the cron or any scheduler settings, you must manually reschedule the job:
+
+Go to your subreddit
+
+Open the subreddit menu
+
+Click ⚙️ Reset and reschedule cron (use after deploy)
+
+This cancels any stale scheduled jobs and registers the new cron from config.ts. You do not need to do this if you only changed postTitle or postContent.
+
 ***
 
 ## Development & Logs

@@ -75,9 +75,22 @@ Devvit.addTrigger({
   onEvent: async (_, context) => scheduleJob(context),
 });
 
-Devvit.addTrigger({
-  event: 'AppUpgrade',
-  onEvent: async (_, context) => scheduleJob(context),
+// Debug menu to reset and reschedule the cron
+Devvit.addMenuItem({
+  label: '⚙️ Reset and reschedule cron (use after deploy)',
+  location: 'subreddit',
+  forUserType: 'moderator',
+  onPress: async (_, context) => {
+    const jobs = await context.scheduler.listJobs();
+    for (const job of jobs) {
+      await context.scheduler.cancelJob(job.id);
+    }
+    await context.scheduler.runJob({
+      name: APP_CONFIG.appName,
+      cron: APP_CONFIG.cron,
+    });
+    context.ui.showToast(`Cancelled ${jobs.length} jobs, new cron scheduled`);
+  },
 });
 
 // Item menu to manually trigger the job
@@ -93,5 +106,22 @@ Devvit.addMenuItem({
     context.ui.showToast('Weekly post in creation...');
   },
 });
+
+// Debug menu to list active jobs
+Devvit.addMenuItem({
+  label: '🔍 Debug: show active jobs',
+  location: 'subreddit',
+  forUserType: 'moderator',
+  onPress: async (_, context) => {
+    const jobs = await context.scheduler.listJobs();
+    console.log(`Active jobs: ${jobs.length}`);
+    for (const job of jobs) {
+      console.log(JSON.stringify(job));
+    }
+    context.ui.showToast(`Active jobs: ${jobs.length} — see log`);
+  },
+});
+
+
 
 export default Devvit;

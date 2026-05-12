@@ -132,6 +132,17 @@ npm run upload
 devvit install nome-della-tua-app NOME_SUBREDDIT
 ```
 
+⚠️ Importante: dopo ogni deploy
+Dopo ogni deploy in cui hai modificato il cron o le impostazioni dello scheduler, devi rischedulare il job manualmente:
+
+Vai sul tuo subreddit
+
+Apri il menu del subreddit
+
+Clicca su ⚙️ Reset and reschedule cron (use after deploy)
+
+Questo cancella i job obsoleti e registra il nuovo cron da config.ts. Non è necessario farlo se hai modificato solo postTitle o postContent.
+
 ***
 
 ## Sviluppo e Log
