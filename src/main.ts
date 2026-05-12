@@ -8,7 +8,6 @@ Devvit.configure({
 
 // Configurazioni del bot (MODIFICA QUESTI VALORI)
 const CONFIG = {
-  subredditName: 'IL_TUO_SUBREDDIT',  // Senza "r/"
   postTitle: 'Discussione Settimanale 🗓️',
   postContent: `# Benvenuti nel thread settimanale!
 
@@ -19,7 +18,7 @@ Questo post viene ricreato automaticamente ogni settimana.
 *Questo è un post automatico creato da un bot*`
 };
 
-// Scheduler job
+// Definizione del job (cosa fare quando scatta)
 Devvit.addSchedulerJob({
   name: 'rtaweeklyposter',
   onRun: async (event, context) => {
@@ -36,7 +35,7 @@ Devvit.addSchedulerJob({
           await oldPost.delete();
           console.log(`✓ Vecchio post eliminato: ${oldPostId}`);
         } catch (error) {
-          console.log(`⚠️ Impossibile eliminare il vecchio post (potrebbe essere già stato eliminato): ${error}`);
+          console.log(`⚠️ Impossibile eliminare il vecchio post: ${error}`);
         }
       } else {
         console.log('Nessun post precedente trovato in Redis (prima esecuzione?)');
@@ -45,14 +44,14 @@ Devvit.addSchedulerJob({
       // STEP 2: Crea il nuovo post
       console.log('Creazione nuovo post...');
       const newPost = await context.reddit.submitPost({
-        subredditName: CONFIG.subredditName,
+        subredditName: await context.reddit.getCurrentSubreddit().then(s => s.name),
         title: CONFIG.postTitle,
         text: CONFIG.postContent,
       });
       
       console.log(`✓ Nuovo post creato: ${newPost.id}`);
 
-      // STEP 3: Pinna il post (opzionale ma raccomandato)
+      // STEP 3: Pinna il post
       try {
         await newPost.sticky();
         console.log('✓ Post pinnato con successo');
@@ -68,9 +67,45 @@ Devvit.addSchedulerJob({
       
     } catch (error) {
       console.error('❌ Errore durante l\'esecuzione:', error);
-      throw error; // Rilancia l'errore per permettere a Devvit di rilevarlo
+      throw error;
     }
   }
+});
+
+// Funzione comune per schedulare
+async function scheduleWeeklyJob(context: any) {
+  const jobs = await context.scheduler.listJobs();
+  for (const job of jobs) {
+    await context.scheduler.cancelJob(job.id);
+  }
+  await context.scheduler.runJob({
+    name: 'rtaweeklyposter',
+    cron: '0 9 * * 1',
+  });
+  console.log('✓ Job settimanale schedulato');
+}
+
+Devvit.addTrigger({
+  event: 'AppInstall',
+  onEvent: async (_, context) => scheduleWeeklyJob(context),
+});
+
+Devvit.addTrigger({
+  event: 'AppUpgrade',
+  onEvent: async (_, context) => scheduleWeeklyJob(context),
+});
+
+Devvit.addMenuItem({
+  label: '🔄 Forza ricreazione post settimanale',
+  location: 'subreddit',
+  forUserType: 'moderator',
+  onPress: async (_, context) => {
+    await context.scheduler.runJob({
+      name: 'rtaweeklyposter',
+      runAt: new Date(),
+    });
+    context.ui.showToast('Post settimanale in creazione...');
+  },
 });
 
 export default Devvit;
